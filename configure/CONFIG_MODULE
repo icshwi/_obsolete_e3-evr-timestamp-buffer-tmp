@@ -1,5 +1,5 @@
 #
-EPICS_MODULE_NAME:=esschic
+EPICS_MODULE_NAME:=evr-timestamp-buffer
 
 EPICS_MODULE_TAG:=2.5.0
 #
@@ -20,7 +20,7 @@ E3_MODULE_VERSION:=2.5.0
 #
 
 E3_MODULE_NAME:=$(EPICS_MODULE_NAME)
-E3_MODULE_SRC_PATH:=esschic
+E3_MODULE_SRC_PATH:=evr-timestamp-buffer
 E3_MODULE_MAKEFILE:=$(EPICS_MODULE_NAME).Makefile
 
 # The definitions shown below can also be placed in an untracked CONFIG_MODULE.local
