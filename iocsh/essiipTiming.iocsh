@@ -1,0 +1,62 @@
+epicsEnvSet("SYS"             "LabS-ESSIIP")
+epicsEnvSet("DEVICE"          "EVR0")
+epicsEnvSet("EVR_PCIDOMAIN"   "0")
+epicsEnvSet("EVR_PCIBUS"      "0x5")
+epicsEnvSet("EVR_PCIDEVICE"   "0x0")
+epicsEnvSet("EVR_PCIFUNCTION" "0")
+
+epicsEnvSet("DRIVEID", "Chop-Drv-01")
+
+require mrfioc2,2.7.13-ESS0
+
+mrmEvrSetupPCI($(DEVICE), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
+
+dbLoadRecords("evr-pcie-300.db", "SYS=$(SYS), DEVICE=$(DEVICE), Link-Clk-SP=88.0525")
+
+#one line for every event that want to receive. Code = Event
+dbLoadRecords("evr-softEvent.template", "SYS=$(SYS), DEVICE=$(DEVICE), EVT=10, CODE=10, FLNK=$(SYS):$(DRIVEID):Rev")
+dbLoadRecords("evr-softEvent.template", "SYS=$(SYS), DEVICE=$(DEVICE), EVT=14, CODE=14, FLNK=$(SYS):$(DRIVEID):BPFO")
+dbLoadRecords("evr-softEvent.template", "SYS=$(SYS), DEVICE=$(DEVICE), EVT=122, CODE=122")
+dbLoadRecords("evr-softEvent.template", "SYS=$(SYS), DEVICE=$(DEVICE), EVT=15, CODE=15")
+                                                     
+#assign each event to a Pulser. ID can keep ID=0
+dbLoadRecords("evr-pulserMap.template", "SYS=$(SYS), DEVICE=$(DEVICE), PID=0, F=Trig, ID=0, EVT=14") # event 14 to Puslser ID (PID) 0
+dbLoadRecords("evr-pulserMap.template", "SYS=$(SYS), DEVICE=$(DEVICE), PID=1, F=Trig, ID=0, EVT=122") # event 122 to pulser ID 1
+dbLoadRecords("evr-pulserMap.template", "SYS=$(SYS), DEVICE=$(DEVICE), PID=2, F=Trig, ID=0, EVT=15") #  event 15 to pulser ID 2
+
+# Load timestamp buffer for chic
+dbLoadRecords("esschicTimestampBuffer.template", "PREFIX=$(SYS), DRIVEID=$(DRIVEID), TDC_TIME_LINK=$(SYS)-$(DEVICE):Event-10-SP.TIME, BEAMPULSE_TIME_LINK=$(SYS)-$(DEVICE):Event-14-SP.TIME, TSARR_N=50")
+
+iocInit
+
+# Set up of UnivIO 0 as Input. Generate Code 10 locally on rising edge.
+dbpf $(SYS)-$(DEVICE):FrontUnivOut0-Src-SP     61
+dbpf $(SYS)-$(DEVICE):FrontUnivOut0-Ena-SP     "Enabled"
+dbpf $(SYS)-$(DEVICE):FPIn0-Trig-Ext-Sel       "Edge"
+dbpf $(SYS)-$(DEVICE):FPIn0-Code-Ext-SP        10
+
+# Set up of output 2 with event 14 with pulse 100uS (14Hz)
+dbpf $(SYS)-$(DEVICE):FrontUnivOut2-Src-SP     0       #here goes the PID
+dbpf $(SYS)-$(DEVICE):Pul0-Evt-Trig0-SP        14      #here goes the event
+dbpf $(SYS)-$(DEVICE):Pul0-Width-SP            100     #pulse width in us
+dbpf $(SYS)-$(DEVICE):Pul0-Delay-SP            0       #delay in us
+dbpf $(SYS)-$(DEVICE):FrontUnivOut2-Ena-SP     "Enabled"
+
+# Skip output 3 because the BNC connectors mechanically interfere
+
+# Set up of output 4 with event 15 with pulse 100uS (450Hz)
+dbpf $(SYS)-$(DEVICE):FrontUnivOut4-Src-SP     2      #here goes the PID
+dbpf $(SYS)-$(DEVICE):Pul2-Evt-Trig0-SP        15
+dbpf $(SYS)-$(DEVICE):Pul2-Width-SP            100
+dbpf $(SYS)-$(DEVICE):Pul2-Delay-SP            0
+dbpf $(SYS)-$(DEVICE):FrontUnivOut4-Ena-SP     "Enabled"
+
+# Skip output 5
+
+# Set up of output 6 with event 122 with pulse 100uS (1Hz)
+dbpf $(SYS)-$(DEVICE):FrontUnivOut6-Src-SP     1       #here goes the PID
+dbpf $(SYS)-$(DEVICE):Pul1-Evt-Trig0-SP        122
+dbpf $(SYS)-$(DEVICE):Pul1-Width-SP            100
+dbpf $(SYS)-$(DEVICE):Pul1-Delay-SP            0
+dbpf $(SYS)-$(DEVICE):FrontUnivOut6-Ena-SP     "Enabled"
+

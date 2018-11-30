@@ -1,0 +1,38 @@
+#@field PREFIX
+#@type STRING
+#Prefix for EPICS PVs.
+#
+#@field CHICIP
+#@type STRING
+#IP address of the CHIC.
+
+require modbus,0+
+require pvaSrv,0+
+require recsync,0+
+ 
+#Specify the TCP endpoint and give your bus a name eg. "tcpcon1".
+drvAsynIPPortConfigure("tcpcon1","$(CHICIP):502",0,0,1)
+#Configure the interpose for TCP
+modbusInterposeConfig("tcpcon1", 0, 0, 0)
+ 
+#Configure the Modbus driver
+#drvModbusAsynConfigure(portName, tcpPortName, slaveAddress, modbusFunction,
+#                       modbusStartAddress, modbusLength, dataType,
+#                       pollMsec, plcType);
+drvModbusAsynConfigure("chic_heartbit", "tcpcon1", 1, 3, 14288, 1, 0, 500, "Heartbit chic")
+drvModbusAsynConfigure("essiipread_binfo", "tcpcon1", 1, 3, 12288, 3, 0, 500, "info bool essiip")
+drvModbusAsynConfigure("essiipread_ninfo", "tcpcon1", 1, 3, 12298, 56, 0, 500, "info int essiip")
+drvModbusAsynConfigure("essiipread_rinfo", "tcpcon1", 1, 3, 12488, 48, 0, 500, "info real essiip")
+drvModbusAsynConfigure("essiipread_winfo", "tcpcon1", 1, 3, 12588, 4, 0, 500, "info dword essiip")
+
+drvModbusAsynConfigure("essiipread_bcmd", "tcpcon1", 1, 3, 13288, 1, 0, 1000, "read bCmds essiip")  
+drvModbusAsynConfigure("essiipwrite_bcmd", "tcpcon1", 1, 6, 13288, 1, 0, 1000, "write bCmds essiip")
+
+drvModbusAsynConfigure("essiipread_rcmd", "tcpcon1", 1,3, 13388, 120, 0, 1000, "read rCmds essiip")
+drvModbusAsynConfigure("essiipwrite_rcmd", "tcpcon1", 1,16, 13388, 120, 0, 1000, "write rCmds essiip")
+
+
+#Load the database defining your EPICS records
+dbLoadRecords(esschic.template, "P=$(PREFIX)")
+
+startPVAServer

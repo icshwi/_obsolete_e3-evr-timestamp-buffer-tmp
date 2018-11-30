@@ -1,0 +1,21 @@
+#@field PREFIX
+#@type STRING
+#Prefix for EPICS PVs
+#
+#@field DRIVEID
+#@type STRING
+#Drive id of the chopper
+
+require pvaSrv,0+
+
+epicsEnvSet("TDC_SCAN", ".002222222 second")
+epicsEnvSet("BEAMPULSE_SCAN", ".07142857 second")
+epicsEnvSet("TSARR_N", 35)
+
+addScan($(TDC_SCAN))
+addScan($(BEAMPULSE_SCAN))
+
+dbLoadRecords(esschicSimTimestamp.template,    "PREFIX=$(PREFIX), DRIVEID=$(DRIVEID), TSARR_N=$(TSARR_N), TDC_SCAN=$(TDC_SCAN), BEAMPULSE_SCAN=$(BEAMPULSE_SCAN)")
+dbLoadRecords(esschicTimestampBuffer.template, "PREFIX=$(PREFIX), DRIVEID=$(DRIVEID), TSARR_N=$(TSARR_N), TDC_TIME_LINK=$(PREFIX):$(DRIVEID):SimTDC.TIME, BEAMPULSE_TIME_LINK=$(PREFIX):$(DRIVEID):SimRef.TIME")
+
+startPVAServer
